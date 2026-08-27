@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { min-height: 100%; margin: 0; }
+body { min-width: 320px; background: #101113; }
+
+@layer utilities {
+	.scrollbar-hide { scrollbar-width: none; }
+	.scrollbar-hide::-webkit-scrollbar { display: none; }
+	.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+}
