@@ -13,24 +13,31 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 //   Response: AiChatResponse (xem types.ts)
 
 export async function chatWithAi(message: string): Promise<AiChatResponse> {
-  const res = await fetch(`${BASE_URL}/api/ai/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-  });
+  try {
+    const res = await fetch(`${BASE_URL}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
 
-  if (!res.ok) {
-    // Backend trả 503 khi Gemini lỗi, 400 khi input rỗng...
-    // Lấy field "error" từ body nếu có, fallback về text chung.
-    let errMsg = "Trợ lý AI tạm thời không phản hồi, vui lòng thử lại.";
-    try {
-      const body = await res.json();
-      if (body?.error) errMsg = body.error;
-    } catch {
-      // ignore parse error
+    if (!res.ok) {
+      // Backend trả 503 khi Gemini lỗi, 400 khi input rỗng...
+      // Lấy field "error" từ body nếu có, fallback về text chung.
+      let errMsg = "Trợ lý AI tạm thời không phản hồi, vui lòng thử lại.";
+      try {
+        const body = await res.json();
+        if (body?.error) errMsg = body.error;
+      } catch {
+        // ignore parse error
+      }
+      throw new Error(errMsg);
     }
-    throw new Error(errMsg);
-  }
 
-  return res.json() as Promise<AiChatResponse>;
+    return res.json() as Promise<AiChatResponse>;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("Không thể kết nối tới backend AI. Hãy đảm bảo server đang chạy và CORS đã được bật.");
+    }
+    throw error;
+  }
 }

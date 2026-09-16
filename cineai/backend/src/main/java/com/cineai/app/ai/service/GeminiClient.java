@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -76,8 +77,13 @@ public class GeminiClient {
             return textNode.asText();
 
         } catch (RestClientException e) {
-            // Timeout, 429 rate limit, 500 từ phía Gemini... đều rơi vào đây
-            throw new AiGatewayException("Không kết nối được tới trợ lý AI, vui lòng thử lại.", e);
+            String message = "Không kết nối được tới trợ lý AI, vui lòng thử lại.";
+            if (e instanceof HttpClientErrorException.Unauthorized || e instanceof HttpClientErrorException.BadRequest) {
+                message = "API key Gemini không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại key trong file application-local.properties.";
+            } else if (e instanceof HttpClientErrorException.TooManyRequests) {
+                message = "Gemini đang bị giới hạn số request. Hãy thử lại sau vài giây.";
+            }
+            throw new AiGatewayException(message, e);
         } catch (Exception e) {
             throw new AiGatewayException("Lỗi xử lý phản hồi từ trợ lý AI.", e);
         }
